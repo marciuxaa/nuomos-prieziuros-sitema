@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 
 function ManagerPage() {
   const [tickets, setTickets] = useState([]);
+  const [tenants, setTenants] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [newTenant, setNewTenant] = useState({ full_name: '', email: '', password: '' });
+  const [tenantMsg, setTenantMsg] = useState('');
   const token = localStorage.getItem('token');
   const name = localStorage.getItem('name');
 
@@ -14,8 +17,17 @@ function ManagerPage() {
     setTickets(data);
   };
 
+  const getTenants = async () => {
+    const res = await fetch('http://localhost:5000/api/users/tenants', {
+      headers: { authorization: token }
+    });
+    const data = await res.json();
+    setTenants(data);
+  };
+
   useEffect(() => {
     getTickets();
+    getTenants();
   }, []);
 
   const changeStatus = async (id, status) => {
@@ -28,6 +40,25 @@ function ManagerPage() {
       body: JSON.stringify({ status })
     });
     getTickets();
+  };
+
+  const createTenant = async () => {
+    if (!newTenant.full_name || !newTenant.email || !newTenant.password) {
+      setTenantMsg('Užpildykite visus laukus');
+      return;
+    }
+    const res = await fetch('http://localhost:5000/api/users/tenants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        authorization: token
+      },
+      body: JSON.stringify(newTenant)
+    });
+    const data = await res.json();
+    setTenantMsg(data.message);
+    setNewTenant({ full_name: '', email: '', password: '' });
+    getTenants();
   };
 
   const logout = () => {
@@ -47,6 +78,58 @@ function ManagerPage() {
             Atsijungti
           </button>
         </div>
+      </div>
+
+      <div className="bg-white p-6 rounded shadow mb-6">
+        <h2 className="text-lg font-semibold mb-4">Sukurti nuomininką</h2>
+        {tenantMsg && <p className="text-green-600 mb-3">{tenantMsg}</p>}
+        <input
+          type="text"
+          placeholder="Vardas Pavardė"
+          value={newTenant.full_name}
+          onChange={(e) => setNewTenant({ ...newTenant, full_name: e.target.value })}
+          className="w-full border p-2 rounded mb-3"
+        />
+        <input
+          type="email"
+          placeholder="El. paštas"
+          value={newTenant.email}
+          onChange={(e) => setNewTenant({ ...newTenant, email: e.target.value })}
+          className="w-full border p-2 rounded mb-3"
+        />
+        <input
+          type="password"
+          placeholder="Laikinas slaptažodis"
+          value={newTenant.password}
+          onChange={(e) => setNewTenant({ ...newTenant, password: e.target.value })}
+          className="w-full border p-2 rounded mb-3"
+        />
+        <button
+          onClick={createTenant}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          Sukurti
+        </button>
+
+        <h3 className="text-md font-semibold mt-6 mb-3">Nuomininkai sistemoje</h3>
+        {tenants.map((t) => (
+  <div key={t.id} className="border-b py-2 text-sm flex justify-between items-center">
+    <p>{t.full_name} - {t.email}</p>
+    <button
+      onClick={() => {
+        if (window.confirm('Ar tikrai norite ištrinti šį nuomininką?')) {
+          fetch(`http://localhost:5000/api/users/tenants/${t.id}`, {
+            method: 'DELETE',
+            headers: { authorization: token }
+          }).then(() => getTenants());
+        }
+      }}
+      className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"
+    >
+      Ištrinti
+    </button>
+  </div>
+))}
       </div>
 
       <div className="mb-4">
