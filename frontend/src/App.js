@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Login from './pages/Login';
 import TenantPage from './pages/TenantPage';
 import ManagerPage from './pages/ManagerPage';
+import TechnicianPage from './pages/TechnicianPage';
 
 function App() {
   const [role, setRole] = useState(null);
@@ -22,9 +23,13 @@ function App() {
     return <ManagerPage />;
   }
 
+  if (role === 'technician') {
+    return <TechnicianPage />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
-      <p className="p-4">Prisijungta kaip: {role}</p>
+      <p className="p-4">Nežinoma rolė</p>
     </div>
   );
 }
