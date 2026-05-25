@@ -43,4 +43,13 @@ const getAttachments = (req, res) => {
     );
 };
 
-module.exports = { upload, uploadAttachment, getAttachments };
+const deleteAttachment = (req, res) => {
+    const { id } = req.params;
+
+    db.query('DELETE FROM ticket_attachments WHERE id = ?', [id], (err) => {
+        if (err) return res.status(500).json({ message: 'Klaida trinant priedą' });
+        res.json({ message: 'Priedas ištrintas' });
+    });
+};
+
+module.exports = { upload, uploadAttachment, getAttachments, deleteAttachment };

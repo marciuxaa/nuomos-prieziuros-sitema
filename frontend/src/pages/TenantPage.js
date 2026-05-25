@@ -6,6 +6,10 @@ function TenantPage() {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('medium');
   const [filter, setFilter] = useState('all');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [attachments, setAttachments] = useState({});
+  const [comments, setComments] = useState({});
+  const [newComment, setNewComment] = useState({});
   const token = localStorage.getItem('token');
   const name = localStorage.getItem('name');
 
@@ -25,15 +29,60 @@ function TenantPage() {
     if (!title) return;
     await fetch('http://localhost:5000/api/tickets', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        authorization: token
-      },
+      headers: { 'Content-Type': 'application/json', authorization: token },
       body: JSON.stringify({ title, description, priority, property_id: 1 })
     });
     setTitle('');
     setDescription('');
     getTickets();
+  };
+
+  const uploadFile = async (ticketId) => {
+    if (!selectedFile) return;
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    await fetch(`http://localhost:5000/api/tickets/${ticketId}/attachments`, {
+      method: 'POST',
+      headers: { authorization: token },
+      body: formData
+    });
+    setSelectedFile(null);
+    getAttachments(ticketId);
+  };
+
+ const getAttachments = async (ticketId) => {
+    if (attachments[ticketId]) {
+      setAttachments(prev => ({ ...prev, [ticketId]: null }));
+      return;
+    }
+    const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}/attachments`, {
+      headers: { authorization: token }
+    });
+    const data = await res.json();
+    setAttachments(prev => ({ ...prev, [ticketId]: data }));
+};
+
+ const getComments = async (ticketId) => {
+    if (comments[ticketId]) {
+      setComments(prev => ({ ...prev, [ticketId]: null }));
+      return;
+    }
+    const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}/comments`, {
+      headers: { authorization: token }
+    });
+    const data = await res.json();
+    setComments(prev => ({ ...prev, [ticketId]: data }));
+};
+
+  const addComment = async (ticketId) => {
+    if (!newComment[ticketId]) return;
+    await fetch(`http://localhost:5000/api/tickets/${ticketId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', authorization: token },
+      body: JSON.stringify({ comment_text: newComment[ticketId] })
+    });
+    setNewComment(prev => ({ ...prev, [ticketId]: '' }));
+    getComments(ticketId);
   };
 
   const logout = () => {
@@ -111,6 +160,70 @@ function TenantPage() {
             <p className="font-medium">{t.title}</p>
             <p className="text-sm text-gray-600">{t.description}</p>
             <p className="text-sm mt-1">Prioritetas: {t.priority} | Statusas: {t.status}</p>
+
+            <div className="mt-2">
+              <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} className="text-sm" />
+              <button onClick={() => uploadFile(t.id)} className="ml-2 bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700">
+                Įkelti
+              </button>
+              <button onClick={() => getAttachments(t.id)} className="ml-2 text-blue-600 text-xs underline">
+                {attachments[t.id] ? 'Slėpti priedus' : 'Rodyti priedus'}
+              </button>
+              {attachments[t.id] && attachments[t.id].length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">Priedų nėra</p>
+              )}
+              {attachments[t.id] && attachments[t.id].length > 0 && (
+                <div className="mt-1">
+                  {attachments[t.id].map((a) => (
+                   <div key={a.id} className="mt-1 flex items-center gap-2">
+                      <a href={`http://localhost:5000/uploads/${a.file_path}`} target="_blank" rel="noreferrer" className="text-xs text-blue-500 underline">
+                        Peržiūrėti nuotrauką
+                      </a>
+                      <button
+                        onClick={async () => {
+                          await fetch(`http://localhost:5000/api/tickets/attachments/${a.id}`, {
+                            method: 'DELETE',
+                            headers: { authorization: token }
+                          });
+                          getAttachments(t.id);
+                        }}
+                        className="text-red-500 text-xs underline"
+                      >
+                        Ištrinti
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-2">
+              <button onClick={() => getComments(t.id)} className="text-green-600 text-sm underline">
+                Rodyti komentarus
+              </button>
+              {comments[t.id] && (
+                <div className="mt-2 bg-gray-50 p-2 rounded text-sm">
+                  {comments[t.id].length === 0 && <p className="text-gray-500">Komentarų nėra</p>}
+                  {comments[t.id].map((c) => (
+                    <p key={c.id} className="text-gray-600 mb-1">
+                      <span className="font-medium">{c.full_name}:</span> {c.comment_text}
+                    </p>
+                  ))}
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      placeholder="Rašyti komentarą..."
+                      value={newComment[t.id] || ''}
+                      onChange={(e) => setNewComment(prev => ({ ...prev, [t.id]: e.target.value }))}
+                      className="border p-1 rounded text-sm flex-1"
+                    />
+                    <button onClick={() => addComment(t.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm">
+                      Siųsti
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>

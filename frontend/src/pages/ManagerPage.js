@@ -12,6 +12,7 @@ function ManagerPage() {
   const [history, setHistory] = useState({});
   const [comments, setComments] = useState({});
 const [newComment, setNewComment] = useState({});
+const [attachments, setAttachments] = useState({});
   const token = localStorage.getItem('token');
   const name = localStorage.getItem('name');
 
@@ -74,11 +75,15 @@ const getHistory = async (ticketId) => {
     setHistory({ ...history, [ticketId]: data });
 };
 const getComments = async (ticketId) => {
+    if (comments[ticketId]) {
+      setComments(prev => ({ ...prev, [ticketId]: null }));
+      return;
+    }
     const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}/comments`, {
-        headers: { authorization: token }
+      headers: { authorization: token }
     });
     const data = await res.json();
-    setComments({ ...comments, [ticketId]: data });
+    setComments(prev => ({ ...prev, [ticketId]: data }));
 };
 
 const addComment = async (ticketId) => {
@@ -90,6 +95,17 @@ const addComment = async (ticketId) => {
     });
     setNewComment({ ...newComment, [ticketId]: '' });
     getComments(ticketId);
+};
+const getAttachments = async (ticketId) => {
+    if (attachments[ticketId]) {
+      setAttachments(prev => ({ ...prev, [ticketId]: null }));
+      return;
+    }
+    const res = await fetch(`http://localhost:5000/api/tickets/${ticketId}/attachments`, {
+      headers: { authorization: token }
+    });
+    const data = await res.json();
+    setAttachments(prev => ({ ...prev, [ticketId]: data }));
 };
   const createTenant = async () => {
     if (!newTenant.full_name || !newTenant.email || !newTenant.password) {
@@ -242,17 +258,64 @@ const addComment = async (ticketId) => {
                 {history[t.id] ? 'Slėpti istoriją' : 'Rodyti istoriją'}
             </button>
 
-            {history[t.id] && (
+          {history[t.id] && (
                 <div className="mt-2 bg-gray-50 p-2 rounded text-sm">
                     {history[t.id].map((h) => (
                         <p key={h.id} className="text-gray-600">
                             {h.full_name}: {h.status_from} → {h.status_to} | {new Date(h.changed_at).toLocaleString('lt-LT')}
                         </p>
                     ))}
-                    
                 </div>                
             )}
-          </div>         
+
+            <div className="mt-2">
+                <button onClick={() => getComments(t.id)} className="text-green-600 text-sm underline">
+    {comments[t.id] ? 'Slėpti komentarus' : 'Rodyti komentarus'}
+</button>
+                {comments[t.id] && (
+                    <div className="mt-2 bg-gray-50 p-2 rounded text-sm">
+                        {comments[t.id].length === 0 && <p className="text-gray-500">Komentarų nėra</p>}
+                        {comments[t.id].map((c) => (
+                            <p key={c.id} className="text-gray-600 mb-1">
+                                <span className="font-medium">{c.full_name}:</span> {c.comment_text}
+                            </p>
+                        ))}
+                        <div className="flex gap-2 mt-2">
+                            <input
+                                type="text"
+                                placeholder="Rašyti komentarą..."
+                                value={newComment[t.id] || ''}
+                                onChange={(e) => setNewComment(prev => ({ ...prev, [t.id]: e.target.value }))}
+                                className="border p-1 rounded text-sm flex-1"
+                            />
+                            <button onClick={() => addComment(t.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm">
+                                Siųsti
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-2">
+                <button onClick={() => getAttachments(t.id)} className="text-purple-600 text-sm underline">
+                    {attachments[t.id] ? 'Slėpti nuotraukas' : 'Rodyti nuotraukas'}
+                </button>
+                {attachments[t.id] && attachments[t.id].length === 0 && (
+                    <p className="text-xs text-gray-500 mt-1">Nuotraukų nėra</p>
+                )}
+                {attachments[t.id] && attachments[t.id].length > 0 && (
+                    <div className="mt-1">
+                        {attachments[t.id].map((a) => (
+                            <div key={a.id} className="mt-1">
+                                <a href={`http://localhost:5000/uploads/${a.file_path}`} target="_blank" rel="noreferrer" className="text-xs text-blue-500 underline">
+                                    Peržiūrėti nuotrauką
+                                </a>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+          </div>       
         ))}
       </div>   
     </div>
