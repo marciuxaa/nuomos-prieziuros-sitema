@@ -15,6 +15,7 @@ function ManagerPage() {
   const [comments, setComments] = useState({});
   const [newComment, setNewComment] = useState({});
   const [attachments, setAttachments] = useState({});
+  
   const token = localStorage.getItem('token');
   const name = localStorage.getItem('name');
 
@@ -121,8 +122,6 @@ function ManagerPage() {
   const logout = () => { localStorage.clear(); window.location.reload(); };
 
   const filtered = filter === 'all' ? tickets : tickets.filter(t => t.status === filter);
-  const priorityLabel = { low: 'Žema', medium: 'Vidutinė', high: 'Aukšta', emergency: 'Avarinė' };
-  const statusLabel = { new: 'Nauja', assigned: 'Priskirta', in_progress: 'Vykdoma', done: 'Atlikta', archived: 'Archyvuota' };
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -132,23 +131,23 @@ function ManagerPage() {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setActiveTab('tickets')}
-            className={`px-4 py-2 rounded text-sm font-medium ${activeTab === 'tickets' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${activeTab === 'tickets' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}
           >
             Užklausos
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded text-sm font-medium ${activeTab === 'users' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded text-sm font-medium transition-colors ${activeTab === 'users' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}
           >
             Vartotojai
           </button>
         </div>
 
         {activeTab === 'tickets' && (
-          <div>
+          <div className="bg-white rounded border border-slate-200 p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-slate-800">Užklausos</h2>
-              <select value={filter} onChange={(e) => setFilter(e.target.value)} className="border border-slate-300 rounded p-2 text-sm">
+              <h2 className="text-base font-semibold text-slate-800">Visos sistemos užklausos</h2>
+              <select value={filter} onChange={(e) => setFilter(e.target.value)} className="border border-slate-300 rounded p-2 text-sm bg-white focus:outline-none focus:border-slate-400">
                 <option value="all">Visos</option>
                 <option value="new">Naujos</option>
                 <option value="assigned">Priskirtos</option>
@@ -160,23 +159,49 @@ function ManagerPage() {
 
             {filtered.length === 0 && <p className="text-slate-500 text-sm">Užklausų nėra</p>}
             {filtered.map((t) => (
-              <div key={t.id} className="bg-white border border-slate-200 rounded p-4 mb-3">
+              <div key={t.id} className="border border-slate-200 rounded p-4 mb-3 bg-white">
+                
+                
                 <div className="flex justify-between items-start">
                   <p className="font-medium text-slate-800">{t.title}</p>
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{statusLabel[t.status]}</span>
+                  <span className="text-xs font-semibold text-slate-600">
+                    Būsena: {
+                      t.status === 'new' ? 'Nauja' :
+                      t.status === 'assigned' ? 'Priskirta' :
+                      t.status === 'in_progress' ? 'Vykdoma' :
+                      t.status === 'done' ? 'Atlikta' :
+                      t.status === 'archived' ? 'Archyvuota' : t.status
+                    }
+                  </span>
                 </div>
+                
                 <p className="text-sm text-slate-500 mt-1">{t.description}</p>
-                <p className="text-xs text-slate-400 mt-1">Prioritetas: {priorityLabel[t.priority]}</p>
+                <p className="text-xs text-slate-400 mt-1">{t.address}, {t.city}</p>
+                
+                <div className="mt-2 text-xs text-slate-500">
+                  Prioritetas: {
+                    t.priority === 'low' ? 'Žemas' :
+                    t.priority === 'medium' ? 'Vidutinis' :
+                    t.priority === 'high' ? 'Aukštas' :
+                    t.priority === 'emergency' ? 'Avarinė situacija' : t.priority
+                  }
+                </div>
 
-                <div className="flex gap-3 mt-3 flex-wrap">
-                  <select value={t.status} onChange={(e) => changeStatus(t.id, e.target.value)} className="border border-slate-300 rounded p-1 text-sm">
+                
+                <div className="mt-3 flex gap-3 flex-wrap">
+                  <select 
+                    value={t.status} 
+                    onChange={(e) => changeStatus(t.id, e.target.value)} 
+                    className="border border-slate-300 rounded p-1 text-sm bg-white focus:outline-none focus:border-slate-400 text-slate-700"
+                  >
                     <option value="new">Nauja</option>
                     <option value="assigned">Priskirta</option>
                     <option value="in_progress">Vykdoma</option>
                     <option value="done">Atlikta</option>
                     <option value="archived">Archyvuota</option>
                   </select>
-                  <select value={t.technician_id || ''} onChange={(e) => assignTechnician(t.id, e.target.value)} className="border border-slate-300 rounded p-1 text-sm">
+                  
+                  <select value={t.technician_id || ''} onChange={(e) => assignTechnician(t.id, e.target.value)} className="border border-slate-300 rounded p-1 text-sm bg-white focus:outline-none focus:border-slate-400 text-slate-700">
                     <option value="">Priskirti techniką</option>
                     {technicians.map((tech) => (
                       <option key={tech.id} value={tech.id}>{tech.full_name}</option>
@@ -184,55 +209,61 @@ function ManagerPage() {
                   </select>
                 </div>
 
-                <div className="flex gap-3 mt-2 flex-wrap">
-                  <button onClick={() => getHistory(t.id)} className="text-xs text-blue-600 underline">
-                    {history[t.id] ? 'Slėpti istoriją' : 'Rodyti istoriją'}
+                <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end gap-4">
+                  <button onClick={() => getHistory(t.id)} className="text-xs text-slate-600 hover:text-slate-800 font-medium transition-colors">
+                    {history[t.id] ? 'Slėpti istoriją' : 'Būsenų istorija'}
                   </button>
-                  <button onClick={() => getComments(t.id)} className="text-xs text-green-600 underline">
-                    {comments[t.id] ? 'Slėpti komentarus' : 'Rodyti komentarus'}
+                  <button onClick={() => getAttachments(t.id)} className="text-xs text-slate-600 hover:text-slate-800 font-medium transition-colors">
+                    {attachments[t.id] ? 'Slėpti nuotraukas' : 'Nuotraukos'}
                   </button>
-                  <button onClick={() => getAttachments(t.id)} className="text-xs text-purple-600 underline">
-                    {attachments[t.id] ? 'Slėpti nuotraukas' : 'Rodyti nuotraukas'}
+                  <button onClick={() => getComments(t.id)} className="text-xs text-slate-600 hover:text-slate-800 font-medium transition-colors">
+                    {comments[t.id] ? 'Slėpti komentarus' : 'Komentarai'}
                   </button>
                 </div>
 
                 {history[t.id] && (
-                  <div className="mt-2 bg-slate-50 rounded p-2 text-xs text-slate-600">
+                  <div className="mt-3 bg-slate-50 rounded p-3 text-xs text-slate-600 border border-slate-200">
+                    {history[t.id].length === 0 && <p className="text-slate-400">Istorijos nėra</p>}
                     {history[t.id].map((h) => (
-                      <p key={h.id}>{h.full_name}: {h.status_from} → {h.status_to} | {new Date(h.changed_at).toLocaleString('lt-LT')}</p>
+                      <p key={h.id} className="mt-1">
+                        Pakeitė <span className="font-medium text-slate-700">{h.full_name}</span>: <span className="font-semibold text-slate-700">{h.status_from}</span> → <span className="font-semibold text-slate-700">{h.status_to}</span>
+                        <span className="text-slate-400 ml-2">| {new Date(h.changed_at).toLocaleString('lt-LT')}</span>
+                      </p>
                     ))}
                   </div>
                 )}
 
+                {attachments[t.id] && (
+                  <div className="mt-3 bg-slate-50 rounded p-3 border border-slate-200">
+                    {attachments[t.id].length === 0 && <p className="text-xs text-slate-400">Nuotraukų nėra</p>}
+                    <div className="flex flex-wrap gap-2">
+                      {attachments[t.id].map((a) => (
+                        <a key={a.id} href={`http://localhost:5000/uploads/${a.file_path}`} target="_blank" rel="noreferrer" className="text-xs bg-white border border-slate-300 rounded px-2 py-1 text-slate-700 hover:bg-slate-50 block font-medium transition-colors">
+                          Peržiūrėti failą
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {comments[t.id] && (
-                  <div className="mt-2 bg-slate-50 rounded p-3 text-sm">
-                    {comments[t.id].length === 0 && <p className="text-slate-400 text-xs">Komentarų nėra</p>}
+                  <div className="mt-3 bg-slate-50 rounded p-3 border border-slate-200">
+                    {comments[t.id].length === 0 && <p className="text-xs text-slate-400 mb-2">Komentarų nėra</p>}
                     {comments[t.id].map((c) => (
-                      <p key={c.id} className="text-slate-600 mb-1"><span className="font-medium">{c.full_name}:</span> {c.comment_text}</p>
+                      <p key={c.id} className="text-sm text-slate-600 mb-1">
+                        <span className="font-medium text-slate-800">{c.full_name}:</span> {c.comment_text}
+                      </p>
                     ))}
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex gap-2 mt-3">
                       <input
                         type="text"
                         placeholder="Rašyti komentarą..."
                         value={newComment[t.id] || ''}
                         onChange={(e) => setNewComment(prev => ({ ...prev, [t.id]: e.target.value }))}
-                        className="border border-slate-300 rounded p-1 text-sm flex-1"
+                        className="border border-slate-300 rounded p-1.5 text-sm flex-1 focus:outline-none focus:border-slate-400 bg-white"
                       />
-                      <button onClick={() => addComment(t.id)} className="bg-slate-800 text-white px-3 py-1 rounded text-sm">Siųsti</button>
+                      <button onClick={() => addComment(t.id)} className="bg-slate-800 text-white px-3 py-1 rounded text-sm hover:bg-slate-700 transition-colors">Siųsti</button>
                     </div>
-                  </div>
-                )}
-
-                {attachments[t.id] && attachments[t.id].length === 0 && (
-                  <p className="text-xs text-slate-400 mt-2">Nuotraukų nėra</p>
-                )}
-                {attachments[t.id] && attachments[t.id].length > 0 && (
-                  <div className="mt-2">
-                    {attachments[t.id].map((a) => (
-                      <a key={a.id} href={`http://localhost:5000/uploads/${a.file_path}`} target="_blank" rel="noreferrer" className="block text-xs text-blue-500 underline mt-1">
-                        Peržiūrėti nuotrauką
-                      </a>
-                    ))}
                   </div>
                 )}
               </div>
@@ -242,19 +273,19 @@ function ManagerPage() {
 
         {activeTab === 'users' && (
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4">Nuomininkai</h2>
-              {tenantMsg && <p className="text-green-600 text-sm mb-3">{tenantMsg}</p>}
+            <div className="bg-white rounded border border-slate-200 p-6">
+              <h2 className="text-base font-semibold text-slate-800 mb-4">Nuomininkai</h2>
+              {tenantMsg && <p className="text-slate-600 text-sm mb-3 font-medium">{tenantMsg}</p>}
               <input type="text" placeholder="Vardas Pavardė" value={newTenant.full_name}
                 onChange={(e) => setNewTenant({ ...newTenant, full_name: e.target.value })}
-                className="w-full border border-slate-300 rounded p-2 mb-2 text-sm" />
+                className="w-full border border-slate-300 rounded p-2 mb-2 text-sm focus:outline-none focus:border-slate-400 bg-white" />
               <input type="email" placeholder="El. paštas" value={newTenant.email}
                 onChange={(e) => setNewTenant({ ...newTenant, email: e.target.value })}
-                className="w-full border border-slate-300 rounded p-2 mb-2 text-sm" />
+                className="w-full border border-slate-300 rounded p-2 mb-2 text-sm focus:outline-none focus:border-slate-400 bg-white" />
               <input type="password" placeholder="Laikinas slaptažodis" value={newTenant.password}
                 onChange={(e) => setNewTenant({ ...newTenant, password: e.target.value })}
-                className="w-full border border-slate-300 rounded p-2 mb-3 text-sm" />
-              <button onClick={createTenant} className="bg-slate-800 text-white px-4 py-2 rounded text-sm hover:bg-slate-700 mb-4">
+                className="w-full border border-slate-300 rounded p-2 mb-3 text-sm focus:outline-none focus:border-slate-400 bg-white" />
+              <button onClick={createTenant} className="bg-slate-800 text-white px-4 py-2 rounded text-sm hover:bg-slate-700 transition-colors mb-4 font-medium">
                 Sukurti nuomininką
               </button>
               <div>
@@ -265,31 +296,38 @@ function ManagerPage() {
                       if (window.confirm('Ar tikrai norite ištrinti?')) {
                         fetch(`http://localhost:5000/api/users/tenants/${t.id}`, { method: 'DELETE', headers: { authorization: token } }).then(() => getTenants());
                       }
-                    }} className="text-red-500 text-xs underline">Ištrinti</button>
+                    }} className="text-slate-500 text-xs font-medium hover:text-red-600 transition-colors">Ištrinti</button>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-slate-800 mb-4">Technikai</h2>
-              {techMsg && <p className="text-green-600 text-sm mb-3">{techMsg}</p>}
+            <div className="bg-white rounded border border-slate-200 p-6">
+              <h2 className="text-base font-semibold text-slate-800 mb-4">Technikai</h2>
+              {techMsg && <p className="text-slate-600 text-sm mb-3 font-medium">{techMsg}</p>}
               <input type="text" placeholder="Vardas Pavardė" value={newTechnician.full_name}
                 onChange={(e) => setNewTechnician({ ...newTechnician, full_name: e.target.value })}
-                className="w-full border border-slate-300 rounded p-2 mb-2 text-sm" />
+                className="w-full border border-slate-300 rounded p-2 mb-2 text-sm focus:outline-none focus:border-slate-400 bg-white" />
               <input type="email" placeholder="El. paštas" value={newTechnician.email}
                 onChange={(e) => setNewTechnician({ ...newTechnician, email: e.target.value })}
-                className="w-full border border-slate-300 rounded p-2 mb-2 text-sm" />
+                className="w-full border border-slate-300 rounded p-2 mb-2 text-sm focus:outline-none focus:border-slate-400 bg-white" />
               <input type="password" placeholder="Laikinas slaptažodis" value={newTechnician.password}
                 onChange={(e) => setNewTechnician({ ...newTechnician, password: e.target.value })}
-                className="w-full border border-slate-300 rounded p-2 mb-3 text-sm" />
-              <button onClick={createTechnician} className="bg-slate-800 text-white px-4 py-2 rounded text-sm hover:bg-slate-700 mb-4">
+                className="w-full border border-slate-300 rounded p-2 mb-3 text-sm focus:outline-none focus:border-slate-400 bg-white" />
+              <button onClick={createTechnician} className="bg-slate-800 text-white px-4 py-2 rounded text-sm hover:bg-slate-700 transition-colors mb-4 font-medium">
                 Sukurti techniką
               </button>
-              <div>
+               <div>
                 {technicians.map((t) => (
-                  <div key={t.id} className="border-b border-slate-100 py-2 text-sm text-slate-700">
-                    {t.full_name} - {t.email}
+                  <div key={t.id} className="flex justify-between items-center border-b border-slate-100 py-2 text-sm">
+                    <span className="text-slate-700">{t.full_name} - {t.email}</span>
+                    <button onClick={() => {
+                      if (window.confirm('Ar tikrai norite ištrinti?')) {
+                        fetch(`http://localhost:5000/api/users/technicians/${t.id}`, {
+                          method: 'DELETE', headers: { authorization: token }
+                        }).then(() => getTechnicians());
+                      }
+                    }} className="text-red-500 text-xs underline">Ištrinti</button>
                   </div>
                 ))}
               </div>

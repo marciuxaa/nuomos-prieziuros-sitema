@@ -84,4 +84,14 @@ const getTechnicians = (req, res) => {
         res.json(result);
     });
 };
-module.exports = { createTenant, getTenants, deleteTenant, createTechnician, getTechnicians };
+const deleteTechnician = (req, res) => {
+    if (req.user.role !== 'manager') {
+        return res.status(403).json({ message: 'Nėra teisių' });
+    }
+    const { id } = req.params;
+    db.query('DELETE FROM users WHERE id = ? AND role = "technician"', [id], (err) => {
+        if (err) return res.status(500).json({ message: 'Klaida trinant techniką' });
+        res.json({ message: 'Technikas ištrintas' });
+    });
+};
+module.exports = { createTenant, getTenants, deleteTenant, createTechnician, getTechnicians, deleteTechnician };
