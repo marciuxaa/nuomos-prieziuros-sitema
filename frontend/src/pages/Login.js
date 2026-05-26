@@ -12,50 +12,48 @@ function Login({ onLogin }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         setError(data.message);
         return;
       }
-
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.role);
       localStorage.setItem('name', data.name);
       onLogin(data.role);
-
     } catch (err) {
       setError('Serverio klaida');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Prisijungimas</h1>
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+      <div className="bg-white p-8 rounded-lg shadow w-96">
+        <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">Prisijungimas</h1>
+        <p className="text-center text-slate-500 text-sm mb-6">Būsto priežiūros sistema</p>
 
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
+        <label className="text-sm text-slate-600">El. paštas</label>
         <input
           type="email"
-          placeholder="El. paštas"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full border p-2 rounded mb-4"
+          className="w-full border rounded p-2 mt-1 mb-4 text-sm"
+          placeholder="vardas@example.lt"
         />
 
+        <label className="text-sm text-slate-600">Slaptažodis</label>
         <input
           type="password"
-          placeholder="Slaptažodis"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full border p-2 rounded mb-4"
+          className="w-full border rounded p-2 mt-1 mb-6 text-sm"
         />
 
         <button
           onClick={handleSubmit}
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+          className="w-full bg-slate-800 text-white py-2 rounded hover:bg-slate-700 text-sm"
         >
           Prisijungti
         </button>

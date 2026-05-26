@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Navbar from '../components/Navbar';
 
 function TenantPage() {
   const [tickets, setTickets] = useState([]);
@@ -50,7 +51,7 @@ function TenantPage() {
     getAttachments(ticketId);
   };
 
- const getAttachments = async (ticketId) => {
+  const getAttachments = async (ticketId) => {
     if (attachments[ticketId]) {
       setAttachments(prev => ({ ...prev, [ticketId]: null }));
       return;
@@ -60,9 +61,9 @@ function TenantPage() {
     });
     const data = await res.json();
     setAttachments(prev => ({ ...prev, [ticketId]: data }));
-};
+  };
 
- const getComments = async (ticketId) => {
+  const getComments = async (ticketId) => {
     if (comments[ticketId]) {
       setComments(prev => ({ ...prev, [ticketId]: null }));
       return;
@@ -72,7 +73,7 @@ function TenantPage() {
     });
     const data = await res.json();
     setComments(prev => ({ ...prev, [ticketId]: data }));
-};
+  };
 
   const addComment = async (ticketId) => {
     if (!newComment[ticketId]) return;
@@ -92,90 +93,96 @@ function TenantPage() {
 
   const filtered = filter === 'all' ? tickets : tickets.filter(t => t.status === filter);
 
+  const priorityLabel = { low: 'Žema', medium: 'Vidutinė', high: 'Aukšta', emergency: 'Avarinė' };
+  const statusLabel = { new: 'Nauja', assigned: 'Priskirta', in_progress: 'Vykdoma', done: 'Atlikta', archived: 'Archyvuota' };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mano užklausos</h1>
-        <div className="flex items-center gap-4">
-          <span className="text-gray-600">{name}</span>
-          <button onClick={logout} className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-            Atsijungti
-          </button>
+    <div className="min-h-screen bg-slate-100">
+      <Navbar name={name} onLogout={logout} />
+
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-lg font-semibold text-slate-800 mb-4">Pateikti naują užklausą</h2>
+          <input
+            type="text"
+            placeholder="Gedimo pavadinimas"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full border border-slate-300 rounded p-2 mb-3 text-sm"
+          />
+          <textarea
+            placeholder="Aprašykite gedimą"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full border border-slate-300 rounded p-2 mb-3 text-sm h-24"
+          />
+          <div className="flex gap-3">
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              className="border border-slate-300 rounded p-2 text-sm"
+            >
+              <option value="low">Žema prioritetas</option>
+              <option value="medium">Vidutinis prioritetas</option>
+              <option value="high">Aukštas prioritetas</option>
+              <option value="emergency">Avarinė situacija</option>
+            </select>
+            <button
+              onClick={createTicket}
+              className="bg-slate-800 text-white px-4 py-2 rounded text-sm hover:bg-slate-700"
+            >
+              Pateikti užklausą
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="bg-white p-6 rounded shadow mb-6">
-        <h2 className="text-lg font-semibold mb-4">Nauja užklausa</h2>
-        <input
-          type="text"
-          placeholder="Pavadinimas"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full border p-2 rounded mb-3"
-        />
-        <textarea
-          placeholder="Aprašymas"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full border p-2 rounded mb-3"
-        />
-        <select
-          value={priority}
-          onChange={(e) => setPriority(e.target.value)}
-          className="w-full border p-2 rounded mb-3"
-        >
-          <option value="low">Žema</option>
-          <option value="medium">Vidutinė</option>
-          <option value="high">Aukšta</option>
-          <option value="emergency">Avarinė</option>
-        </select>
-        <button
-          onClick={createTicket}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          Pateikti
-        </button>
-      </div>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-semibold text-slate-800">Mano užklausos</h2>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="border border-slate-300 rounded p-2 text-sm"
+            >
+              <option value="all">Visos</option>
+              <option value="new">Naujos</option>
+              <option value="assigned">Priskirtos</option>
+              <option value="in_progress">Vykdomos</option>
+              <option value="done">Atliktos</option>
+              <option value="archived">Archyvuotos</option>
+            </select>
+          </div>
 
-      <div className="mb-4">
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="border p-2 rounded"
-        >
-          <option value="all">Visos</option>
-          <option value="new">Naujos</option>
-          <option value="assigned">Priskirtos</option>
-          <option value="in_progress">Vykdomos</option>
-          <option value="done">Atliktos</option>
-          <option value="archived">Archyvuotos</option>
-        </select>
-      </div>
+          {filtered.length === 0 && <p className="text-slate-500 text-sm">Užklausų nėra</p>}
+          {filtered.map((t) => (
+            <div key={t.id} className="border border-slate-200 rounded p-4 mb-3">
+              <div className="flex justify-between items-start">
+                <p className="font-medium text-slate-800">{t.title}</p>
+                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">{statusLabel[t.status]}</span>
+              </div>
+              <p className="text-sm text-slate-500 mt-1">{t.description}</p>
+              <p className="text-xs text-slate-400 mt-1">Prioritetas: {priorityLabel[t.priority]}</p>
 
-      <div className="bg-white p-6 rounded shadow">
-        <h2 className="text-lg font-semibold mb-4">Užklausų istorija</h2>
-        {filtered.length === 0 && <p className="text-gray-500">Užklausų nėra</p>}
-        {filtered.map((t) => (
-          <div key={t.id} className="border-b py-3">
-            <p className="font-medium">{t.title}</p>
-            <p className="text-sm text-gray-600">{t.description}</p>
-            <p className="text-sm mt-1">Prioritetas: {t.priority} | Statusas: {t.status}</p>
+              <div className="mt-3 flex gap-3 flex-wrap">
+                <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} className="text-xs" />
+                <button onClick={() => uploadFile(t.id)} className="text-xs bg-slate-600 text-white px-2 py-1 rounded hover:bg-slate-500">
+                  Įkelti nuotrauką
+                </button>
+                <button onClick={() => getAttachments(t.id)} className="text-xs text-blue-600 underline">
+                  {attachments[t.id] ? 'Slėpti nuotraukas' : 'Rodyti nuotraukas'}
+                </button>
+                <button onClick={() => getComments(t.id)} className="text-xs text-green-600 underline">
+                  {comments[t.id] ? 'Slėpti komentarus' : 'Rodyti komentarus'}
+                </button>
+              </div>
 
-            <div className="mt-2">
-              <input type="file" onChange={(e) => setSelectedFile(e.target.files[0])} className="text-sm" />
-              <button onClick={() => uploadFile(t.id)} className="ml-2 bg-gray-600 text-white px-2 py-1 rounded text-xs hover:bg-gray-700">
-                Įkelti
-              </button>
-              <button onClick={() => getAttachments(t.id)} className="ml-2 text-blue-600 text-xs underline">
-                {attachments[t.id] ? 'Slėpti priedus' : 'Rodyti priedus'}
-              </button>
               {attachments[t.id] && attachments[t.id].length === 0 && (
-                <p className="text-xs text-gray-500 mt-1">Priedų nėra</p>
+                <p className="text-xs text-slate-400 mt-2">Nuotraukų nėra</p>
               )}
               {attachments[t.id] && attachments[t.id].length > 0 && (
-                <div className="mt-1">
+                <div className="mt-2">
                   {attachments[t.id].map((a) => (
-                   <div key={a.id} className="mt-1 flex items-center gap-2">
+                    <div key={a.id} className="flex gap-2 items-center mt-1">
                       <a href={`http://localhost:5000/uploads/${a.file_path}`} target="_blank" rel="noreferrer" className="text-xs text-blue-500 underline">
                         Peržiūrėti nuotrauką
                       </a>
@@ -187,7 +194,7 @@ function TenantPage() {
                           });
                           getAttachments(t.id);
                         }}
-                        className="text-red-500 text-xs underline"
+                        className="text-xs text-red-500 underline"
                       >
                         Ištrinti
                       </button>
@@ -195,17 +202,12 @@ function TenantPage() {
                   ))}
                 </div>
               )}
-            </div>
 
-            <div className="mt-2">
-              <button onClick={() => getComments(t.id)} className="text-green-600 text-sm underline">
-                Rodyti komentarus
-              </button>
               {comments[t.id] && (
-                <div className="mt-2 bg-gray-50 p-2 rounded text-sm">
-                  {comments[t.id].length === 0 && <p className="text-gray-500">Komentarų nėra</p>}
+                <div className="mt-3 bg-slate-50 rounded p-3">
+                  {comments[t.id].length === 0 && <p className="text-xs text-slate-400">Komentarų nėra</p>}
                   {comments[t.id].map((c) => (
-                    <p key={c.id} className="text-gray-600 mb-1">
+                    <p key={c.id} className="text-sm text-slate-600 mb-1">
                       <span className="font-medium">{c.full_name}:</span> {c.comment_text}
                     </p>
                   ))}
@@ -215,17 +217,17 @@ function TenantPage() {
                       placeholder="Rašyti komentarą..."
                       value={newComment[t.id] || ''}
                       onChange={(e) => setNewComment(prev => ({ ...prev, [t.id]: e.target.value }))}
-                      className="border p-1 rounded text-sm flex-1"
+                      className="border border-slate-300 rounded p-1 text-sm flex-1"
                     />
-                    <button onClick={() => addComment(t.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm">
+                    <button onClick={() => addComment(t.id)} className="bg-slate-800 text-white px-3 py-1 rounded text-sm">
                       Siųsti
                     </button>
                   </div>
                 </div>
               )}
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
